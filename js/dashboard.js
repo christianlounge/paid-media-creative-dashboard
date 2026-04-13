@@ -1,7 +1,7 @@
 /**
  * dashboard.js — Apartments.com.au Paid Media Dashboard
  *
- * Architecture: static site → JSONP → Google Apps Script → Google Sheets
+ * Architecture: static site → fetch() → Google Apps Script → Google Sheets
  * No build step. All vanilla JS. Update APPS_SCRIPT_URL below if the
  * Apps Script deployment URL ever changes.
  */
@@ -10,7 +10,7 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzV_glU6LyF4cxlrTbMqHu0bZKuhkcfAokC4P-KQ9fCQ94G_zgXDIL8Q5Cue27Pss19A/exec';
 const TOKEN              = 'acom_dashboard_2026';
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-const JSONP_TIMEOUT_MS    = 30000;          // 30 seconds
+const FETCH_TIMEOUT_MS    = 30000;          // 30 seconds
 const ROWS_PER_PAGE       = 50;
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -43,46 +43,43 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshTimer = setInterval(fetchData, REFRESH_INTERVAL_MS);
 });
 
-// ── JSONP data fetch ──────────────────────────────────────────────────────────
+// ── Fetch data ────────────────────────────────────────────────────────────────
 function fetchData() {
   setStatusLoading();
-  const cbName = 'dashboardCallback_' + Date.now();
-  const script = document.createElement('script');
 
+  const controller = new AbortController();
   const timer = setTimeout(() => {
-    cleanup();
-    showError('Request timed out after 10 seconds.');
-  }, JSONP_TIMEOUT_MS);
+    controller.abort();
+    showError('Request timed out after 30 seconds.');
+  }, FETCH_TIMEOUT_MS);
 
-  window[cbName] = (data) => {
-    clearTimeout(timer);
-    cleanup();
-    onDataReceived(data);
-  };
-
-  script.src = `${APPS_SCRIPT_URL}?token=${TOKEN}&callback=${cbName}`;
-  script.onerror = () => {
-    clearTimeout(timer);
-    cleanup();
-    showError('Failed to load data. Check your connection or the Apps Script URL.');
-  };
-  document.head.appendChild(script);
-
-  function cleanup() {
-    delete window[cbName];
-    if (script.parentNode) script.parentNode.removeChild(script);
-  }
+  fetch(`${APPS_SCRIPT_URL}?token=${TOKEN}`, { signal: controller.signal })
+    .then(r => {
+      if (!r.ok) throw new Error(`Server returned ${r.status}`);
+      return r.json();
+    })
+    .then(data => {
+      clearTimeout(timer);
+      onDataReceived(data);
+    })
+    .catch(err => {
+      clearTimeout(timer);
+      if (err.name === 'AbortError') return; // timeout message already shown
+      showError('Failed to load data: ' + err.message);
+    });
 }
 
 function onDataReceived(data) {
   hideError();
 
-  // Apps Script returns { platforms: [...], projects: [...] }
-  // Accept either shape gracefully
+  // Apps Script returns { "Platforms Data": [...], "Projects Data": [...] }
+  // Also accept a plain array (e.g. from CSV upload)
   if (Array.isArray(data)) {
     rawData = data;
+  } else if (data && Array.isArray(data['Platforms Data'])) {
+    rawData = data['Platforms Data'];
   } else if (data && Array.isArray(data.platforms)) {
-    rawData = data.platforms;
+    rawData = data.platforms; // legacy fallback
   } else {
     showError('Unexpected data format from server.');
     return;
