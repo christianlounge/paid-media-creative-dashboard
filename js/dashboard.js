@@ -10,7 +10,7 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzV_glU6LyF4cxlrTbMqHu0bZKuhkcfAokC4P-KQ9fCQ94G_zgXDIL8Q5Cue27Pss19A/exec';
 const TOKEN              = 'acom_dashboard_2026';
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-const JSONP_TIMEOUT_MS    = 10000;          // 10 seconds
+const JSONP_TIMEOUT_MS    = 30000;          // 30 seconds
 const ROWS_PER_PAGE       = 50;
 
 // ── State ─────────────────────────────────────────────────────────────────────
