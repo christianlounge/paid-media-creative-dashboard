@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paid media dashboard — Apartments.com.au</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+  <!-- ── Sticky header ──────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Apartments.com.au</span>
+    </div>
+    <div class="header-divider"></div>
+    <span class="header-title">Paid media dashboard</span>
+    <div class="header-spacer"></div>
+    <div class="header-meta">
+      <div class="status-pill" id="status-pill">
+        <span class="status-dot loading" id="status-dot"></span>
+        <span class="last-updated" id="last-updated">Connecting…</span>
+      </div>
+      <button class="btn-refresh" id="btn-refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Error banner ───────────────────────────────────────── -->
+  <div class="error-banner" id="error-banner" hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span class="error-message" id="error-message">Unable to load data.</span>
+    <button class="btn-retry" id="btn-retry">Retry</button>
+    <div class="csv-fallback">
+      <span>Or upload a CSV:</span>
+      <label class="btn-csv-label" for="csv-upload">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Choose file
+      </label>
+      <input type="file" id="csv-upload" accept=".csv" style="display:none" />
+    </div>
+  </div>
+
+  <!-- ── Main content ───────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Filters -->
+    <section class="filters-section" id="filters">
+      <div class="filter-group filter-dates">
+        <label class="filter-label" for="filter-date-from">Date range</label>
+        <div class="date-range-inputs">
+          <input type="date" id="filter-date-from" aria-label="Date from" />
+          <span class="date-sep">→</span>
+          <input type="date" id="filter-date-to" aria-label="Date to" />
+        </div>
+      </div>
+      <div class="filter-divider"></div>
+      <div class="filter-group">
+        <label class="filter-label" for="filter-project-id">Project ID</label>
+        <input type="text" id="filter-project-id" placeholder="e.g. P001" />
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filter-project-name">Project</label>
+        <select id="filter-project-name">
+          <option value="">All projects</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filter-platform">Platform</label>
+        <select id="filter-platform">
+          <option value="">All platforms</option>
+          <option value="instagram">Instagram</option>
+          <option value="facebook">Facebook</option>
+          <option value="tiktok">TikTok</option>
+          <option value="linkedin">LinkedIn</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filter-ad-type">Ad type</label>
+        <select id="filter-ad-type">
+          <option value="">All types</option>
+          <option value="Static">Static</option>
+          <option value="Reel">Reel</option>
+          <option value="Video">Video</option>
+        </select>
+      </div>
+      <button class="btn-clear-filters" id="btn-clear-filters">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Clear
+      </button>
+    </section>
+
+    <!-- KPI cards -->
+    <div class="kpi-grid" id="kpi-grid">
+
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--spend">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total spend</div>
+          <div class="kpi-value" id="kpi-spend">&mdash;</div>
+          <div class="kpi-sub">Australian dollars</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--impressions">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">Impressions</div>
+          <div class="kpi-value" id="kpi-impressions">&mdash;</div>
+          <div class="kpi-sub" id="kpi-reach">Reach: &mdash;</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--clicks">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 10 20 10 20 20 4 20 4 10 9 10"/><path d="M12 15V4"/><polyline points="8 8 12 4 16 8"/></svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">Clicks</div>
+          <div class="kpi-value" id="kpi-clicks">&mdash;</div>
+          <div class="kpi-sub" id="kpi-ctr">Avg CTR: &mdash;</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--projects">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">Projects with live ads</div>
+          <div class="kpi-value" id="kpi-projects">&mdash;</div>
+          <div class="kpi-sub">Unique projects</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--new">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">New ads in period</div>
+          <div class="kpi-value" id="kpi-new-ads">&mdash;</div>
+          <div class="kpi-sub">First seen in date range</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--active">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total active ads</div>
+          <div class="kpi-value" id="kpi-active-ads">&mdash;</div>
+          <div class="kpi-sub">Unique ad names</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Ad format breakdown -->
+    <section class="format-section">
+      <div class="section-header">
+        <span class="section-title">Ad format breakdown</span>
+        <span class="section-subtitle">Deduplicated by ad name</span>
+      </div>
+      <div class="format-bar-wrap">
+        <div class="format-bar" id="format-bar">
+          <div class="format-bar-segment static" id="bar-static" style="flex:1"><span></span></div>
+          <div class="format-bar-segment reel"   id="bar-reel"   style="flex:1"><span></span></div>
+          <div class="format-bar-segment video"  id="bar-video"  style="flex:1"><span></span></div>
+        </div>
+      </div>
+      <div class="format-legend">
+        <div class="format-legend-item">
+          <span class="legend-dot static"></span>
+          <span id="legend-static">Static</span>
+        </div>
+        <div class="format-legend-item">
+          <span class="legend-dot reel"></span>
+          <span id="legend-reel">Reel</span>
+        </div>
+        <div class="format-legend-item">
+          <span class="legend-dot video"></span>
+          <span id="legend-video">Video</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects with active ads -->
+    <section class="projects-section">
+      <div class="section-header">
+        <span class="section-title">Projects with active ads</span>
+        <span class="section-subtitle">Sorted by spend</span>
+      </div>
+      <div class="table-scroll">
+        <table class="projects-active-table">
+          <thead>
+            <tr>
+              <th>Project name</th>
+              <th>Formats running</th>
+              <th style="text-align:right">Total spend</th>
+            </tr>
+          </thead>
+          <tbody id="projects-tbody">
+            <tr><td colspan="3" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Main data table -->
+    <section class="main-table-section">
+      <div class="section-header">
+        <span class="section-title">Ad performance data</span>
+        <span class="section-subtitle" id="pagination-info"></span>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="data-table">
+          <thead>
+            <tr>
+              <th data-col="Date">Date</th>
+              <th data-col="Platform">Platform</th>
+              <th data-col="Project Name">Project</th>
+              <th data-col="Ad Name">Ad name</th>
+              <th data-col="Ad Type">Type</th>
+              <th data-col="Impressions" class="num">Impressions</th>
+              <th data-col="Clicks" class="num">Clicks</th>
+              <th data-col="Spend" class="num">Spend</th>
+              <th data-col="CTR" class="num">CTR</th>
+            </tr>
+          </thead>
+          <tbody id="data-tbody">
+            <tr><td colspan="9" class="loading-state">
+              <div class="spinner"></div>
+              <div>Loading data…</div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination">
+        <div class="pagination-controls">
+          <button class="btn-page" id="btn-prev">&#8592; Prev</button>
+          <div class="page-jump">
+            Page <input type="number" id="page-jump-input" min="1" value="1" />
+            <span id="page-jump-total">of 1</span>
+          </div>
+          <button class="btn-page" id="btn-next">Next &#8594;</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
